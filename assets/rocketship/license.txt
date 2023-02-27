@@ -1,0 +1,11 @@
+Model Information:
+* title:	Rocket
+* source:	https://sketchfab.com/3d-models/rocket-f2de8f6deee14c3db0a65b23fa8faf89
+* author:	Damla Yagli (https://sketchfab.com/ddamlayagli)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Rocket" (https://sketchfab.com/3d-models/rocket-f2de8f6deee14c3db0a65b23fa8faf89) by Damla Yagli (https://sketchfab.com/ddamlayagli) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
