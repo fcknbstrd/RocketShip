@@ -1,0 +1,2 @@
+We modified the image from <a href="https://de.freepik.com/vektoren-kostenlos/set-feuer-flammen_1077635.htm#page=3&query=fire%20sprite&position=6&from_view=search&track=ais">Freepik</a>
+to setup a spritesheet animation for the flame.
