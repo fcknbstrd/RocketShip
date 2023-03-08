@@ -4,6 +4,8 @@ Control the rocket ship by [w]/[s] OR [^]/[v] to move up and down. Avoid appeari
 The game uses many ready-to-go components of the Gorilla3D framework, like physics, import-formats, FMOD audio playback, sketchfab-plugin, 
 PBR-materials, bloom, skybox, design-time shaders and much more.
 
+![Alt text](g3d-screen-rocketship-med.png?raw=true "RocketShip")
+
 ##Requirements:
 - You need to at least Delphi 10.1+ and Gorilla3D Developer Edition package to be installed
 - A GPU with at least OpenGL 4.3
