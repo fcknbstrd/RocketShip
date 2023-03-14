@@ -9,6 +9,7 @@ PBR-materials, bloom, skybox, design-time shaders and much more.
 ##Requirements:
 - You need to at least Delphi 10.1+ and Gorilla3D Developer Edition package to be installed
 - A GPU with at least OpenGL 4.3
+- Gorilla3D Developer Edition or GAMEPACKAGE 
 
 ##Installation
 1) Install Gorilla3D from GetIt-Package-Manager
