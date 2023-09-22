@@ -469,48 +469,53 @@ begin
   if not (Assigned(ABodyA) and Assigned(ABodyB)) then
     Exit;
 
-  // Collision detection between astroids and diamonds
-  if ((ABodyA = RocketShipGroup.TagObject) and (ABodyB = Diamond.TagObject))
-  or ((ABodyB = RocketShipGroup.TagObject) and (ABodyA = Diamond.TagObject)) then
-  begin
-    // Diamond collision detected - collect lifetime / fuel - depending on the type
-    case Diamond.Tag of
-      // fuel diamond
-      1 : begin
-            Self.GorillaFMODAudioManager1.PlaySound(FDiamond1Sound, nil, false);
-            Self.AdjustFuelBar(10 + Random(100));
-          end;
-      // lifetime diamond
-      else
-          begin
-            Self.GorillaFMODAudioManager1.PlaySound(FDiamond2Sound, nil, false);
-            Self.AdjustLifeTimeBar((1 + Random(3)) * 10);
-          end;
-    end;
-
-    // Create a new diamond of random type
-    Self.ThrowDiamond();
-  end
-  else if (ABodyA = RocketShipGroup.TagObject) or (ABodyB = RocketShipGroup.TagObject) then
-  begin
-    // Collision with top/bottom astroids - reduce life time by 10
-    // or collision with single astroids
-    if (ABodyA = Astroid.TagObject) or (ABodyB = Astroid.TagObject) then
-      Self.AdjustLifeTimeBar(-5)
-    else
-      Self.AdjustLifeTimeBar(-10);
-
-    // Playback color animation on rocketship
-    ColorAnimation4.Enabled := true;
-    ColorAnimation4.Start;
-
-    // Play crash sound, but only limited times, to prevent robotic sound
-    if not ( Assigned(FCrashChannel) and (FCrashChannel.IsPlaying) ) then
+  // Synchronize with the main thread
+  TThread.Queue(nil,
+    procedure()
     begin
-      // Only play, if not already playing
-      FCrashChannel := GorillaFMODAudioManager1.PlaySound(FCrashSound, nil, false);
-    end;
-  end;
+      // Collision detection between astroids and diamonds
+      if ((ABodyA = RocketShipGroup.TagObject) and (ABodyB = Diamond.TagObject))
+      or ((ABodyB = RocketShipGroup.TagObject) and (ABodyA = Diamond.TagObject)) then
+      begin
+        // Diamond collision detected - collect lifetime / fuel - depending on the type
+        case Diamond.Tag of
+          // fuel diamond
+          1 : begin
+                Self.GorillaFMODAudioManager1.PlaySound(FDiamond1Sound, nil, false);
+                Self.AdjustFuelBar(10 + Random(100));
+              end;
+          // lifetime diamond
+          else
+              begin
+                Self.GorillaFMODAudioManager1.PlaySound(FDiamond2Sound, nil, false);
+                Self.AdjustLifeTimeBar((1 + Random(3)) * 10);
+              end;
+        end;
+
+        // Create a new diamond of random type
+        Self.ThrowDiamond();
+      end
+      else if (ABodyA = RocketShipGroup.TagObject) or (ABodyB = RocketShipGroup.TagObject) then
+      begin
+        // Collision with top/bottom astroids - reduce life time by 10
+        // or collision with single astroids
+        if (ABodyA = Astroid.TagObject) or (ABodyB = Astroid.TagObject) then
+          Self.AdjustLifeTimeBar(-5)
+        else
+          Self.AdjustLifeTimeBar(-10);
+
+        // Playback color animation on rocketship
+        ColorAnimation4.Enabled := true;
+        ColorAnimation4.Start;
+
+        // Play crash sound, but only limited times, to prevent robotic sound
+        if not ( Assigned(FCrashChannel) and (FCrashChannel.IsPlaying) ) then
+        begin
+          // Only play, if not already playing
+          FCrashChannel := GorillaFMODAudioManager1.PlaySound(FCrashSound, nil, false);
+        end;
+      end;
+    end);
 end;
 
 procedure TForm1.ThrowAstroid();
