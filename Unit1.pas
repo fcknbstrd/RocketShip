@@ -10,7 +10,7 @@ uses
   Gorilla.Prefab, FMX.Types3D, System.Math.Vectors, Gorilla.Light,
   FMX.MaterialSources, Gorilla.Material.Default, Gorilla.Material.POM,
   Gorilla.Material.PBR, Gorilla.Cone, Gorilla.Physics.Q3.Body, Gorilla.Physics.Q3.Contact,
-  System.Diagnostics,
+  System.Diagnostics, Gorilla.Physics.Types,
   FMX.Controls.Presentation, FMX.StdCtrls, FMX.Objects3D, Gorilla.Camera,
   Gorilla.Particle.Influencer, Gorilla.Particle.Emitter,
   Gorilla.Material.Particle, FMX.Ani, Gorilla.Controller,
@@ -38,7 +38,6 @@ const
 type
   TForm1 = class(TForm)
     GorillaViewport1: TGorillaViewport;
-    GorillaSkyBox1: TGorillaSkyBox;
     GorillaPhysicsSystem1: TGorillaPhysicsSystem;
     GorillaPrefabSystem1: TGorillaPrefabSystem;
     Rocketship: TGorillaModel;
@@ -79,6 +78,7 @@ type
     DiamondMaterialSource: TGorillaBlinnMaterialSource;
     ColorAnimation6: TColorAnimation;
     Label2: TLabel;
+    GorillaSkyBox1: TGorillaSkyBox;
 
     /// Create / Prepare all necessary things
     procedure FormCreate(Sender: TObject);
@@ -91,13 +91,12 @@ type
     /// User control by keyboard
     procedure FormKeyDown(Sender: TObject; var Key: Word; var KeyChar: Char;
       Shift: TShiftState);
-    /// Render physics colliders
-    procedure RenderPhysicsRender(Sender: TObject; Context: TContext3D);
-    /// Collision detected
-    procedure GorillaPhysicsSystem1BeginContact(
-      const AContact: PQ3ContactConstraint; const ABodyA, ABodyB: TQ3Body);
+    // Collision detected
+    procedure GorillaPhysicsSystem1BeginContact(const AContact: Pointer;
+      const AOffset, ANormal: TPoint3D; const ABodyA,
+      ABodyB: TGorillaPhysicsBody);
   private
-    FColliders : TArray<TQ3Body>;
+    FColliders : TArray<TGorillaPhysicsBody>; // TQ3Body
     FStopWatch : TStopWatch;
     FLastTick  : Int64;
     FFlyTime   : Int64;
@@ -197,7 +196,7 @@ type
       procedure AddInstanceCollider(const ATemplate : TMeshDef;
         const AData: TGorillaMeshInstance; const APrefab: TGorillaColliderSettings;
         const AAbsoluteMatrix: TMatrix3D; const ASize: TPoint3D; const AFlipData : Boolean;
-        out ABody: TQ3Body);
+        out ABody: TGorillaPhysicsBody {TQ3Body});
   end;
 
 { TGorillaPhysicsHelper }
@@ -205,7 +204,7 @@ type
 procedure TGorillaPhysicsHelper.AddInstanceCollider(const ATemplate : TMeshDef;
   const AData: TGorillaMeshInstance; const APrefab: TGorillaColliderSettings;
   const AAbsoluteMatrix: TMatrix3D; const ASize: TPoint3D; const AFlipData : Boolean;
-  out ABody: TQ3Body);
+  out ABody: TGorillaPhysicsBody {TQ3Body});
 var LTransform : TMatrix3D;
 begin
   // Get the translation from absolute instance matrix
@@ -421,42 +420,8 @@ begin
   end;
 end;
 
-procedure TForm1.Timer1Timer(Sender: TObject);
-begin
-  // Move obstacle instances to simulate movement
-  MoveObstacles();
-
-  // Show used boost value
-  AdjustBoostBar();
-
-  // Increase time flied
-  Inc(FFlyTime, 1);
-  if (FFlyTime mod 10 = 0) then
-  begin
-    // increas speed in regular steps
-    FSpeed := FSpeed + 0.01;
-    FSpeed := Min(1.5, FSpeed);
-  end;
-end;
-
-procedure TForm1.Button1Click(Sender: TObject);
-begin
-  Start();
-end;
-
-procedure TForm1.RenderPhysicsRender(Sender: TObject; Context: TContext3D);
-var LRender : TQ3Render;
-begin
-  if not SHOW_PHYSICS_COLLIDERS then
-    Exit;
-
-  // Here we render physics colliders for debugging
-  LRender.Context := Context;
-  GorillaPhysicsSystem1.Engine.Render(@LRender);
-end;
-
-procedure TForm1.GorillaPhysicsSystem1BeginContact(
-  const AContact: PQ3ContactConstraint; const ABodyA, ABodyB: TQ3Body);
+procedure TForm1.GorillaPhysicsSystem1BeginContact(const AContact: Pointer;
+  const AOffset, ANormal: TPoint3D; const ABodyA, ABodyB: TGorillaPhysicsBody);
 begin
   // Only check collisions if physics is activated.
   if not GorillaPhysicsSystem1.Active then
@@ -516,6 +481,29 @@ begin
         end;
       end;
     end);
+end;
+
+procedure TForm1.Timer1Timer(Sender: TObject);
+begin
+  // Move obstacle instances to simulate movement
+  MoveObstacles();
+
+  // Show used boost value
+  AdjustBoostBar();
+
+  // Increase time flied
+  Inc(FFlyTime, 1);
+  if (FFlyTime mod 10 = 0) then
+  begin
+    // increas speed in regular steps
+    FSpeed := FSpeed + 0.01;
+    FSpeed := Min(1.5, FSpeed);
+  end;
+end;
+
+procedure TForm1.Button1Click(Sender: TObject);
+begin
+  Start();
 end;
 
 procedure TForm1.ThrowAstroid();
@@ -581,7 +569,7 @@ var LObstacles,
     LSize,
     LScale    : TPoint3D;
     LCollider : TGorillaColliderSettings;
-    LRigidBody: TQ3Body;
+    LRigidBody: TGorillaPhysicsBody; // TQ3Body;
 begin
   // Prepare physics colliders
   System.SetLength(FColliders, OBSTACLES * 2);
@@ -678,7 +666,7 @@ var I          : Integer;
     LSize,
     LScale     : TPoint3D;
     LCollider  : TGorillaColliderSettings;
-    LRigidBody : TQ3Body;
+    LRigidBody : TGorillaPhysicsBody; // TQ3Body;
     LCurrTick  : Int64;
 begin
   LObstacles  := OBSTACLES;
