@@ -2,6 +2,8 @@ unit Unit1;
 
 interface
 
+{$DEFINE VER_1_3_0_3815}
+
 uses
   System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs,
@@ -17,7 +19,7 @@ uses
   Gorilla.Controller.Passes.Environment, Gorilla.Plane, Gorilla.Material.Blinn,
   Gorilla.Sphere, FMX.Objects, Gorilla.Audio.FMOD, Gorilla.Audio.FMOD.Intf.Sound,
   Gorilla.Audio.FMOD.Intf.Channel, Gorilla.Particle.Explosion,
-  Gorilla.Material.Custom;
+  Gorilla.Material.Custom, Gorilla.Audio.Manager, Gorilla.Audio.FMOD.Intf.ChannelGroup;
 
 const
   // Number of obstacles in scene per row
@@ -105,6 +107,21 @@ type
     FFuel      : Integer;
     FSpeed     : Single;
 
+  {$IFDEF VER_1_3_0_3815}
+    FBoostChannel : IGorillaFMODChannel;
+    FBoostSound   : TGorillaFMODSoundItem;
+
+    FCrashChannel : IGorillaFMODChannel;
+    FCrashSound   : TGorillaFMODSoundItem;
+
+    FSpaceSound   : TGorillaFMODSoundItem;
+    FMusic        : TGorillaFMODSoundItem;
+
+    FDiamond1Sound,
+    FDiamond2Sound: TGorillaFMODSoundItem;
+
+    FEffects      : IGorillaFMODChannelGroup;
+  {$ELSE}
     FBoostChannel : IGorillaFMODChannel;
     FBoostSound   : IGorillaFMODSound;
 
@@ -116,6 +133,7 @@ type
 
     FDiamond1Sound,
     FDiamond2Sound: IGorillaFMODSound;
+  {$ENDIF}
 
     /// <summary>
     /// Prepare diamond instance
@@ -295,6 +313,41 @@ begin
 {$ELSE}
   LPath := IncludeTrailingPathDelimiter(TPath.GetHomePath());
 {$ENDIF}
+
+{$IFDEF VER_1_3_0_3815}
+  FEffects := GorillaFMODAudioManager1.AddChannelGroup('effects');
+
+  // Directly play background space sound
+  FSpaceSound := GorillaFMODAudioManager1.LoadSoundItemFromFile(LPath +
+    '670700__matrixxx__space-atmosphere-02-remastered.wav') as TGorillaFMODSoundItem;
+  FSpaceSound.Loop := true;
+  FSpaceSound.Play();
+
+  // Directly play background music
+  FMusic := GorillaFMODAudioManager1.LoadSoundItemFromFile(LPath +
+    'dark-matter-10710.mp3') as TGorillaFMODSoundItem;
+  FMusic.Loop := true;
+  FMusic.Play();
+
+  // Prepare boost sound
+  FBoostSound := GorillaFMODAudioManager1.LoadSoundItemFromFile(LPath +
+    '521377__jarusca__rocket-launch.mp3') as TGorillaFMODSoundItem;
+  FBoostSound.ChannelGroup := 'effects';
+
+  // Prepare crash sound
+  FCrashSound := GorillaFMODAudioManager1.LoadSoundItemFromFile(LPath +
+    '321143__rodincoil__concrete-and-glass-breaking-in-dumpster.wav') as TGorillaFMODSoundItem;
+  FCrashSound.ChannelGroup := 'effects';
+
+  // Prepare diamond #1/#2 sound
+  FDiamond1Sound := GorillaFMODAudioManager1.LoadSoundItemFromFile(LPath +
+    '171639__leszek_szary__scale-d6.wav') as TGorillaFMODSoundItem;
+  FDiamond1Sound.ChannelGroup := 'effects';
+
+  FDiamond2Sound := GorillaFMODAudioManager1.LoadSoundItemFromFile(LPath +
+    '171646__leszek_szary__scale-e6.wav') as TGorillaFMODSoundItem;
+  FDiamond2Sound.ChannelGroup := 'effects';
+{$ELSE}
   // Directly play background space sound
   FSpaceSound := GorillaFMODAudioManager1.LoadSoundFromFile(LPath + '670700__matrixxx__space-atmosphere-02-remastered.wav');
   FSpaceSound.Mode := FMOD_LOOP_NORMAL;
@@ -314,6 +367,7 @@ begin
   // Prepare diamond #1/#2 sound
   FDiamond1Sound := GorillaFMODAudioManager1.LoadSoundFromFile(LPath + '171639__leszek_szary__scale-d6.wav');
   FDiamond2Sound := GorillaFMODAudioManager1.LoadSoundFromFile(LPath + '171646__leszek_szary__scale-e6.wav');
+{$ENDIF}
 end;
 
 procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -332,6 +386,7 @@ begin
   FDiamond2Sound := nil;
   FSpaceSound := nil;
   FMusic := nil;
+  FEffects := nil;
 
   GorillaFMODAudioManager1.StopAllChannels();
   GorillaFMODAudioManager1.ClearSounds();
@@ -417,7 +472,15 @@ begin
   if not ( Assigned(FBoostChannel) and (FBoostChannel.IsPlaying) ) then
   begin
     // Only play, if not already playing
+  {$IFDEF VER_1_3_0_3815}
+    FBoostSound.Stop();
+    FBoostChannel := nil; // unset the watcher interface
+
+    FBoostSound.Play();
+    FBoostChannel := FBoostSound.Channel;
+  {$ELSE}
     FBoostChannel := GorillaFMODAudioManager1.PlaySound(FBoostSound, nil, false);
+  {$ENDIF}
   end;
 end;
 
@@ -447,13 +510,21 @@ begin
         case Diamond.Tag of
           // fuel diamond
           1 : begin
+              {$IFDEF VER_1_3_0_3815}
+                FDiamond1Sound.Play();
+              {$ELSE}
                 Self.GorillaFMODAudioManager1.PlaySound(FDiamond1Sound, nil, false);
+              {$ENDIF}
                 Self.AdjustFuelBar(10 + Random(100));
               end;
           // lifetime diamond
           else
               begin
+              {$IFDEF VER_1_3_0_3815}
+                FDiamond2Sound.Play();
+              {$ELSE}
                 Self.GorillaFMODAudioManager1.PlaySound(FDiamond2Sound, nil, false);
+              {$ENDIF}
                 Self.AdjustLifeTimeBar((1 + Random(3)) * 10);
               end;
         end;
@@ -478,7 +549,14 @@ begin
         if not ( Assigned(FCrashChannel) and (FCrashChannel.IsPlaying) ) then
         begin
           // Only play, if not already playing
+        {$IFDEF VER_1_3_0_3815}
+          FCrashSound.Stop();
+          FCrashChannel := nil; // unset the watcher interface
+          FCrashSound.Play();
+          FCrashChannel := FCrashSound.Channel;
+        {$ELSE}
           FCrashChannel := GorillaFMODAudioManager1.PlaySound(FCrashSound, nil, false);
+        {$ENDIF}
         end;
       end;
     end);
